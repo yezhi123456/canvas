@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="./Sky.js"></script>
+    <script src="./Land.js"></script>
+    <script src="./Pipe.js"></script>
+    <script src="./Bird.js"></script>
+    <style>
+        #canvas {
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+<canvas width='800' height='600' id='canvas'></canvas>
+<script>
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+
+    //1. 加载所有图片
+    var birdsImg = new Image();
+    birdsImg.src = "./img/birds.png";
+
+    var landImg = new Image();
+    landImg.src = "./img/land.png";
+
+    var pipe1Img = new Image();
+    pipe1Img.src = "./img/pipe1.png";
+
+    var pipe2Img = new Image();
+    pipe2Img.src = "./img/pipe2.png";
+
+    var skyimg = new Image();
+    skyimg.src = "./img/sky.png";
+
+    var imgArr = [birdsImg, landImg, pipe1Img, pipe2Img, skyimg];
+    var count = 0;
+    imgArr.forEach(function(img){
+        img.onload = function() {
+            count += 1;
+            if (count == imgArr.length) {
+                console.log("所有图片都加载成功了");
+
+                //创建一个角色数组
+                var rolesArr = [];
+                var bird;
+
+                //1. 创建所有的对象
+                function createRoles() {
+                    //创建两个天空对象
+                    for (var i = 0; i < 2; i++) {
+                        var sky = new Sky({
+                            image: skyimg,
+                            x: i * skyimg.width,
+                            canvas: canvas,
+                            context: context
+                        });                        
+
+                        //把对象放入数组(各就位)
+                        rolesArr.push(sky);
+                    }
+
+                    //创建四个陆地对象
+                    for (var i = 0; i < 4; i++) {
+                        var land = new Land({
+                            image: landImg,
+                            x: i * landImg.width,
+                            canvas: canvas,
+                            context: context
+                        });                        
+
+                        //把对象放入数组(各就位)
+                        rolesArr.push(land);
+                    }
+
+                    //创建管道的对象
+                    var gap = (canvas.width - 6 * pipe1Img.width)/5;
+                    for (var i = 0; i < 6; i++) {
+                        var pipe = new Pipe({
+                            topImage: pipe2Img,
+                            bottomImage: pipe1Img,
+                            x: 500 + i * (pipe1Img.width+gap),
+                            canvas: canvas,
+                            context: context,
+                            xgap: gap,
+                            ygap: 100,
+                            bgap: landImg.height
+                        });
+
+                        rolesArr.push(pipe);
+                    }
+
+                    //创建小鸟对象
+                    bird = new Bird({
+                        image: birdsImg,
+                        x: 100,
+                        y: 100,
+                        canvas: canvas,
+                        context: context,
+                    });
+
+                    rolesArr.push(bird);
+                }
+
+                createRoles();
+
+                //2. 实现绘制
+                function draw(){
+                    
+                    //开启一张新的玻璃纸， 保证每一帧只有一张玻璃纸
+                    context.beginPath();
+
+                    //清空画布
+                    context.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    //每个角色自己绘制自己
+                    rolesArr.forEach(function(role){
+                        role.draw();
+                    });
+
+                    // context.stroke();
+
+                    //判断小鸟是否已经进入了玻璃纸上路径的区域
+                    if (context.isPointInPath(bird.x + birdsImg.width/3/2, bird.y + birdsImg.height/2)) {
+                        return;
+                    }
+
+                    if (bird.y < -10) return;
+                    
+
+                    window.requestAnimationFrame(draw);
+                }
+
+                draw();
+
+                //3. 添加小鸟点击往上跳的效果
+                canvas.onclick = function() {
+                    bird.speed = -0.15;
+                }
+            }
+        }
+    });
+    
+</script>
+</body>
+</html>
+
+<!-- 
+    名字提练法：
+    一只小鸟在天上飞，当它撞到柱子，或掉到地上，就死了。
+    小鸟， 天空， 柱子， 地（四个类）
+    1，把类提炼出来
+    2. 创建对象 一只小鸟对象 两个天空对象 四个陆地对象 6个柱子对象
+
+    isPointInPath()
+ -->
